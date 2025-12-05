@@ -146,4 +146,3 @@ function MeowthModel({ modelPath = "/Meowth/Nyarth.dae" }) {
 }
 
 export default MeowthModel;
-
