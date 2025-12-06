@@ -312,20 +312,15 @@ export default function Detail() {
               className="info-card-glass"
               style={{
                 width: "100%",
-                background: (() => {
-                  const primaryType = info.types?.[0] || "노말";
-                  const color1 = typeColors[primaryType]?.primary || "#6366f1";
-                  const color2 =
-                    typeColors[primaryType]?.secondary || "#0f172a";
-                  return `linear-gradient(135deg, ${color1}15 0%, ${color2}20 100%)`;
-                })(),
+                background:
+                  "linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.6) 100%)",
                 borderRadius: "clamp(16px, 2vw, 24px)",
                 padding: "clamp(24px, 4vw, 40px)",
                 boxShadow:
-                  "0 8px 32px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.2) inset, 0 2px 8px rgba(255, 255, 255, 0.15) inset",
+                  "0 8px 32px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.7) inset, 0 2px 8px rgba(255, 255, 255, 0.5) inset",
                 backdropFilter: "blur(20px) saturate(180%)",
                 WebkitBackdropFilter: "blur(20px) saturate(180%)",
-                border: "1px solid rgba(255, 255, 255, 0.3)",
+                border: "1px solid rgba(255, 255, 255, 0.7)",
                 transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
                 boxSizing: "border-box",
                 position: "relative",
@@ -347,11 +342,10 @@ export default function Detail() {
               />
               <p
                 style={{
-                  color: "rgba(255, 255, 255, 0.9)",
+                  color: "#64748b",
                   fontWeight: 600,
                   margin: 0,
                   fontSize: "clamp(12px, 2vw, 14px)",
-                  textShadow: "0 2px 4px rgba(0, 0, 0, 0.3)",
                 }}
               >
                 No.{paddedId}
@@ -360,8 +354,7 @@ export default function Detail() {
                 style={{
                   margin: "8px 0 0",
                   fontSize: "clamp(28px, 5vw, 42px)",
-                  color: "#ffffff",
-                  textShadow: "0 2px 8px rgba(0, 0, 0, 0.4)",
+                  color: "#0f172a",
                 }}
               >
                 {info.nameKo}
@@ -369,10 +362,9 @@ export default function Detail() {
               <p
                 style={{
                   margin: "4px 0 18px",
-                  color: "rgba(255, 255, 255, 0.85)",
+                  color: "#475569",
                   fontWeight: 600,
                   fontSize: "clamp(14px, 2.5vw, 18px)",
-                  textShadow: "0 2px 4px rgba(0, 0, 0, 0.3)",
                 }}
               >
                 {info.nameEn}
@@ -409,9 +401,8 @@ export default function Detail() {
               <p
                 style={{
                   lineHeight: 1.6,
-                  color: "rgba(255, 255, 255, 0.9)",
+                  color: "#475569",
                   marginBottom: "28px",
-                  textShadow: "0 1px 3px rgba(0, 0, 0, 0.3)",
                 }}
               >
                 {info.description}
@@ -483,8 +474,7 @@ export default function Detail() {
                       style={{
                         margin: 0,
                         fontSize: "12px",
-                        color: "rgba(255, 255, 255, 0.7)",
-                        textShadow: "0 1px 2px rgba(0, 0, 0, 0.3)",
+                        color: "#94a3b8",
                       }}
                     >
                       {item.label}
@@ -493,8 +483,7 @@ export default function Detail() {
                       style={{
                         margin: "6px 0 0",
                         fontWeight: 600,
-                        color: "#ffffff",
-                        textShadow: "0 1px 3px rgba(0, 0, 0, 0.4)",
+                        color: "#0f172a",
                       }}
                     >
                       {item.value}
