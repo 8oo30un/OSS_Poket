@@ -1,0 +1,110 @@
+/* Onboarding.css */
+
+.onboarding-container {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #2b1f6d 0%, #5d1e58 100%);
+}
+
+.stars-background {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  pointer-events: none; 
+}
+
+.star {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: white;
+  border-radius: 50%;
+  animation: twinkle 3s infinite;
+  box-shadow: 0 0 4px white;
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.2; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.5); }
+}
+
+.pokeball-container {
+  position: relative;
+  width: 300px;
+  height: 300px;
+  z-index: 10;
+  transition: transform 0.3s ease;
+  /* 살짝 떠있는 듯한 부드러운 그림자 */
+  filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.3));
+  will-change: transform; /* 성능 최적화 */
+  /* 회전 중심점을 정확히 중앙으로 설정 */
+  transform-origin: center center;
+}
+
+/* 회전 애니메이션 클래스 */
+.pokeball-container.rotating {
+  /* forwards: 애니메이션이 끝난 후 마지막 상태(180도 회전된 상태) 유지 */
+  /* cubic-bezier로 더 부드러운 easing 적용 */
+  animation: rotate-clockwise 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* 180도 회전만 수행 - 제자리에서만 회전 (이동 없음) */
+@keyframes rotate-clockwise {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(180deg);
+  }
+}
+
+.pokeball-svg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.onboarding-text {
+  position: absolute;
+  bottom: 120px;
+  text-align: center;
+  z-index: 10;
+  animation: fadeInUp 1s ease-out;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.pokemon-title {
+  font-size: 32px;
+  font-weight: 500;
+  color: white;
+  margin: 0 0 12px 0;
+  letter-spacing: 2px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  text-transform: uppercase;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .pokeball-container {
+    width: 240px;
+    height: 240px;
+  }
+
+  .pokemon-title {
+    font-size: 35px;
+  }
+}
+

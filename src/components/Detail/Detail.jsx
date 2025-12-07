@@ -1,66 +1,10 @@
-import React, { Suspense, useRef } from "react";
+import React, { Suspense, useRef, useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, Html, ContactShadows } from "@react-three/drei";
-import * as THREE from "three";
-import LaprasModel from "./Lapras3D";
-import pokemonDetails from "./data/pokemonDetails";
-
-// 포켓몬 타입별 배경색 매핑
-const typeColors = {
-  풀: { primary: "#78C850", secondary: "#A8E063" },
-  독: { primary: "#A040A0", secondary: "#C183C1" },
-  불꽃: { primary: "#F08030", secondary: "#F5A460" },
-  물: { primary: "#6890F0", secondary: "#9DB7F5" },
-  벌레: { primary: "#A8B820", secondary: "#C6D16E" },
-  비행: { primary: "#A890F0", secondary: "#C6B7F5" },
-  노말: { primary: "#A8A878", secondary: "#C6C6A7" },
-  전기: { primary: "#F8D030", secondary: "#FAE078" },
-  땅: { primary: "#E0C068", secondary: "#EBD69D" },
-  페어리: { primary: "#EE99AC", secondary: "#F4BDC9" },
-  격투: { primary: "#C03028", secondary: "#D67873" },
-  에스퍼: { primary: "#F85888", secondary: "#FA92B2" },
-  바위: { primary: "#B8A038", secondary: "#D1C17D" },
-  고스트: { primary: "#705898", secondary: "#A292BC" },
-  드래곤: { primary: "#7038F8", secondary: "#A27DFA" },
-  악: { primary: "#705848", secondary: "#A29288" },
-  강철: { primary: "#B8B8D0", secondary: "#D1D1E0" },
-  얼음: { primary: "#98D8D8", secondary: "#BCE6E6" },
-  "???": { primary: "#68A090", secondary: "#9DC1B7" },
-};
-
-// 타입에 따른 3D 캔버스 배경 그라데이션 생성 (반짝이는 효과 포함)
-const getCanvasBackground = (types) => {
-  if (!types || types.length === 0) {
-    return `linear-gradient(135deg, rgba(99,102,241,0.45) 0%, rgba(15,23,42,0.9) 100%),
-            radial-gradient(circle at 30% 40%, rgba(255,255,255,0.1) 0%, transparent 50%),
-            radial-gradient(circle at 70% 60%, rgba(255,255,255,0.08) 0%, transparent 50%)`;
-  }
-
-  const primaryType = types[0];
-  const color1 = typeColors[primaryType]?.primary || "#6366f1";
-  const color2 = typeColors[primaryType]?.secondary || "#0f172a";
-
-  // 반짝이는 효과를 위한 radial-gradient 추가
-  const sparkleGradient = `
-    radial-gradient(circle at 25% 35%, rgba(255,255,255,0.15) 0%, transparent 40%),
-    radial-gradient(circle at 75% 65%, rgba(255,255,255,0.12) 0%, transparent 40%),
-    radial-gradient(circle at 50% 50%, rgba(255,255,255,0.08) 0%, transparent 60%)
-  `;
-
-  // 타입이 하나여도 primary와 secondary 색상으로 그라데이션 적용
-  if (types.length > 1) {
-    // 두 개 이상의 타입이면 두 타입의 색상으로 그라데이션
-    const secondaryType = types[1];
-    const color3 = typeColors[secondaryType]?.primary || color1;
-    return `linear-gradient(135deg, ${color1} 0%, ${color2} 50%, ${color3} 100%),
-            ${sparkleGradient}`;
-  }
-
-  // 단일 타입이어도 primary와 secondary로 그라데이션 적용
-  return `linear-gradient(135deg, ${color1} 0%, ${color2} 100%),
-          ${sparkleGradient}`;
-};
+import ModelLoader from "../../models/ModelLoader";
+import { getCanvasBackground, VIEW_CONFIG, getModelPath } from "../../utils/helpers";
+import { getPokemonDetails } from "../../utils/pokeapi";
 
 // 모델 등장 애니메이션 (150% -> 100%)
 function AnimatedModel({ modelPath }) {
@@ -78,7 +22,7 @@ function AnimatedModel({ modelPath }) {
 
   return (
     <group ref={groupRef} scale={1.5}>
-      <LaprasModel modelPath={modelPath} />
+      <ModelLoader modelPath={modelPath} />
     </group>
   );
 }
@@ -136,45 +80,54 @@ export default function Detail() {
   const numericId = Number(id);
   const paddedId = String(numericId).padStart(4, "0");
 
-  const info = pokemonDetails[numericId] || {
+  const [info, setInfo] = useState({
     nameKo: `포켓몬 No.${paddedId}`,
-    nameEn: "Unknown",
+    nameEn: "Loading...",
     badges: ["스칼렛", "바이올렛"],
-    description: "아직 데이터가 등록되지 않았어요. 곧 업데이트될 예정입니다.",
+    description: "데이터를 불러오는 중...",
     types: ["???"],
     height: "-",
     weight: "-",
-    category: "??? 포켓몬",
+    category: "포켓몬",
     ability: "-",
     gender: "-",
-    cta: "도감 업데이트 알림 받기",
-  };
-
-  const getViewConfig = () => ({
-    cameraPos: [0, 3, 10],
-    target: [0, 0, 0],
+    cta: "정보 보기",
   });
-  const viewConfig = getViewConfig();
+  const [error, setError] = useState(null);
 
-  const getModelPath = (pokeId) => {
-    if (pokeId === 1) return "/pokemon/1/pm0001_00_00.dae";
-    if (pokeId === 4) return "/pokemon/4/hitokage.dae";
-    if (pokeId === 5) return "/pokemon/5/lizardo.dae";
-    if (pokeId === 6) return "/pokemon/6/lizardon.dae";
-    if (pokeId === 7) return "/pokemon/7/zenigame.dae";
-    if (pokeId === 8) return "/pokemon/8/kameil.dae";
-    if (pokeId === 9) return "/pokemon/9/kamex.dae";
-    if (pokeId === 10) return "/pokemon/10/caterpie.dae";
-    if (pokeId === 11) return "/pokemon/11/transel.dae";
-    if (pokeId === 12) return "/pokemon/12/Male/butterfree.dae";
-    if (pokeId === 13) return "/pokemon/13/beedle.dae";
-    if (pokeId === 14) return "/pokemon/14/cocoon.dae";
-    if (pokeId === 131) return "/pokemon/131/a131.dae";
-    if (pokeId === 143) return "/pokemon/143/snorlax.obj";
+  useEffect(() => {
+    const fetchPokemonData = async () => {
+      if (Number.isNaN(numericId) || numericId < 1) {
+        setError("유효하지 않은 포켓몬 ID입니다.");
+        return;
+      }
 
-    const fallbackPadded = String(pokeId).padStart(4, "0");
-    return `/pokemon/${pokeId}/pm${fallbackPadded}_00_00.dae`;
-  };
+      setError(null);
+
+      try {
+        const pokemonData = await getPokemonDetails(numericId);
+        setInfo(pokemonData);
+      } catch (err) {
+        console.error("포켓몬 데이터 로드 실패:", err);
+        setError("포켓몬 데이터를 불러올 수 없습니다.");
+        setInfo({
+          nameKo: `포켓몬 No.${paddedId}`,
+          nameEn: "Unknown",
+          badges: ["스칼렛", "바이올렛"],
+          description: "데이터를 불러올 수 없습니다.",
+          types: ["???"],
+          height: "-",
+          weight: "-",
+          category: "??? 포켓몬",
+          ability: "-",
+          gender: "-",
+          cta: "도감 업데이트 알림 받기",
+        });
+      }
+    };
+
+    fetchPokemonData();
+  }, [numericId, paddedId]);
 
   let modelPath = getModelPath(numericId);
   if (Number.isNaN(numericId)) {
@@ -206,7 +159,7 @@ export default function Detail() {
         }}
       >
         <Link
-          to="/"
+          to="/home"
           style={{
             alignSelf: "flex-start",
             padding: "10px 20px",
@@ -221,6 +174,20 @@ export default function Detail() {
         >
           ← 도감으로 돌아가기
         </Link>
+
+        {error && (
+          <div
+            style={{
+              padding: "16px",
+              backgroundColor: "#fee2e2",
+              color: "#991b1b",
+              borderRadius: "12px",
+              border: "1px solid #fecaca",
+            }}
+          >
+            ⚠️ {error}
+          </div>
+        )}
 
         <div
           style={{
@@ -261,13 +228,13 @@ export default function Detail() {
                   minHeight: "300px",
                 }}
                 camera={{
-                  position: viewConfig.cameraPos,
+                  position: VIEW_CONFIG.cameraPos,
                   fov: 45,
                   near: 0.05,
                   far: 50000,
                 }}
               >
-                <OrbitControlsWrapper viewConfig={viewConfig} />
+                <OrbitControlsWrapper viewConfig={VIEW_CONFIG} />
                 <ambientLight intensity={0.9} />
                 <directionalLight position={[5, 5, 5]} intensity={1.2} />
                 <Suspense
@@ -518,3 +485,4 @@ export default function Detail() {
     </div>
   );
 }
+
