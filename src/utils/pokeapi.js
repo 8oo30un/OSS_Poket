@@ -93,7 +93,6 @@ export async function getPokemonDetails(id) {
     return {
       nameKo,
       nameEn: species.names?.find((n) => n.language.name === 'en')?.name || pokemon.name,
-      badges: ['스칼렛', '바이올렛'],
       description,
       types,
       height: `${(pokemon.height / 10).toFixed(1)} m`,
