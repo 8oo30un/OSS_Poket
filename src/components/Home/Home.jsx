@@ -1,17 +1,83 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { usePokemon } from "../../contexts/PokemonContext";
 import MyPokemonDropZone from "../MyPokemon/MyPokemonDropZone";
 import Header from "./Header";
+import { getPokemonSpecies } from "../../utils/pokeapi";
 
 export default function Home() {
   const { user, logout } = useAuth();
   const { isPokemonSaved, myPokemon, removePokemon, loading } = usePokemon();
   const navigate = useNavigate();
   const [hoveredPokemonId, setHoveredPokemonId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterSavedOnly, setFilterSavedOnly] = useState(false);
+  const [pokemonNames, setPokemonNames] = useState({});
+  const [loadingNames, setLoadingNames] = useState(false);
+  
   // 1번(이상해씨)부터 151번(뮤)까지 1세대 포켓몬 ID 배열 생성
   const pokemonIds = Array.from({ length: 151 }, (_, i) => i + 1);
+
+  // 포켓몬 이름 데이터 로드
+  useEffect(() => {
+    const loadPokemonNames = async () => {
+      setLoadingNames(true);
+      const names = {};
+      
+      // 병렬로 모든 포켓몬 이름 로드 (배치 처리로 API 부하 줄이기)
+      const batchSize = 20;
+      for (let i = 0; i < pokemonIds.length; i += batchSize) {
+        const batch = pokemonIds.slice(i, i + batchSize);
+        const promises = batch.map(async (id) => {
+          try {
+            const species = await getPokemonSpecies(id);
+            const nameKo = species.names?.find((n) => n.language.name === 'ko')?.name || `포켓몬 ${id}`;
+            return { id, nameKo };
+          } catch (error) {
+            console.error(`포켓몬 ${id} 이름 로드 실패:`, error);
+            return { id, nameKo: `포켓몬 ${id}` };
+          }
+        });
+        
+        const results = await Promise.all(promises);
+        results.forEach(({ id, nameKo }) => {
+          names[id] = nameKo;
+        });
+      }
+      
+      setPokemonNames(names);
+      setLoadingNames(false);
+    };
+
+    loadPokemonNames();
+  }, []);
+
+  // 검색 및 필터링된 포켓몬 목록
+  const filteredPokemonIds = useMemo(() => {
+    let filtered = pokemonIds;
+
+    // 저장된 포켓몬만 필터링
+    if (filterSavedOnly) {
+      filtered = filtered.filter((id) => isPokemonSaved(id));
+    }
+
+    // 검색어 필터링
+    if (searchQuery.trim()) {
+      const query = searchQuery.trim().toLowerCase();
+      filtered = filtered.filter((id) => {
+        // 번호로 검색
+        if (id.toString().includes(query)) {
+          return true;
+        }
+        // 이름으로 검색
+        const name = pokemonNames[id] || "";
+        return name.toLowerCase().includes(query);
+      });
+    }
+
+    return filtered;
+  }, [pokemonIds, searchQuery, filterSavedOnly, pokemonNames, isPokemonSaved]);
 
   const handleDragStart = (e, pokemonId) => {
     e.dataTransfer.setData("pokemonId", pokemonId.toString());
@@ -55,7 +121,10 @@ export default function Home() {
         paddingTop: "100px", // fixed header 공간 확보
       }}
     >
-      <Header />
+      <Header 
+        onSearchChange={setSearchQuery} 
+        onFilterChange={setFilterSavedOnly} 
+      />
 
       {/* 사용자 정보 및 로그아웃 버튼 */}
       <div
@@ -184,6 +253,20 @@ export default function Home() {
         궁금한 포켓몬을 클릭해서 3D로 자세히 살펴보세요!
       </p>
 
+      {/* 검색 결과 표시 */}
+      {(searchQuery || filterSavedOnly) && (
+        <p 
+          style={{ 
+            textAlign: "center", 
+            color: "#666", 
+            marginBottom: "20px",
+            fontSize: "14px"
+          }}
+        >
+          {loadingNames ? "로딩 중..." : `검색 결과: ${filteredPokemonIds.length}개`}
+        </p>
+      )}
+
       {/* CSS Grid를 이용한 반응형 그리드 레이아웃 */}
       <div
         style={{
@@ -194,7 +277,23 @@ export default function Home() {
           width: "100%", // 기기 너비에 맞게 가로를 꽉 채움
         }}
       >
-        {pokemonIds.map((id) => (
+        {filteredPokemonIds.length === 0 ? (
+          <div
+            style={{
+              gridColumn: "1 / -1",
+              textAlign: "center",
+              padding: "40px 20px",
+              color: "#999",
+            }}
+          >
+            {loadingNames ? (
+              <p>포켓몬 데이터를 불러오는 중...</p>
+            ) : (
+              <p>검색 결과가 없습니다.</p>
+            )}
+          </div>
+        ) : (
+          filteredPokemonIds.map((id) => (
           // Link 컴포넌트: 클릭 시 '/pokemon/{id}' 경로로 이동
           <Link
             to={`/pokemon/${id}`}
@@ -324,7 +423,8 @@ export default function Home() {
               </p>
             </div>
           </Link>
-        ))}
+          ))
+        )}
       </div>
 
       {/* 드래그 앤 드롭 존 */}
