@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { usePokemon } from "../../contexts/PokemonContext";
@@ -6,8 +6,9 @@ import MyPokemonDropZone from "../MyPokemon/MyPokemonDropZone";
 
 export default function Home() {
   const { user, logout } = useAuth();
-  const { isPokemonSaved, myPokemon } = usePokemon();
+  const { isPokemonSaved, myPokemon, removePokemon, loading } = usePokemon();
   const navigate = useNavigate();
+  const [hoveredPokemonId, setHoveredPokemonId] = useState(null);
   // 1번(이상해씨)부터 151번(뮤)까지 1세대 포켓몬 ID 배열 생성
   const pokemonIds = Array.from({ length: 151 }, (_, i) => i + 1);
 
@@ -25,6 +26,21 @@ export default function Home() {
   const handleLogout = () => {
     logout();
     navigate("/login");
+  };
+
+  const handleRemovePokemon = async (e, pokemonId) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (
+      window.confirm(`포켓몬 No. ${pokemonId}를 장바구니에서 삭제하시겠습니까?`)
+    ) {
+      try {
+        await removePokemon(pokemonId);
+      } catch (error) {
+        alert(error.message || "삭제에 실패했습니다.");
+      }
+    }
   };
 
   return (
@@ -206,10 +222,14 @@ export default function Home() {
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = "scale(1.05)";
                 e.currentTarget.style.cursor = "grab";
+                if (isPokemonSaved(id)) {
+                  setHoveredPokemonId(id);
+                }
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = "scale(1)";
                 e.currentTarget.style.cursor = "grab";
+                setHoveredPokemonId(null);
               }}
               onMouseDown={(e) => {
                 e.currentTarget.style.cursor = "grabbing";
@@ -219,27 +239,70 @@ export default function Home() {
               }}
             >
               {isPokemonSaved(id) && (
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "8px",
-                    right: "8px",
-                    backgroundColor: "#3b82f6",
-                    color: "white",
-                    borderRadius: "50%",
-                    width: "24px",
-                    height: "24px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "12px",
-                    fontWeight: "bold",
-                    boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
-                  }}
-                  title="저장됨"
-                >
-                  ✓
-                </div>
+                <>
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "8px",
+                      right: "8px",
+                      backgroundColor: "#3b82f6",
+                      color: "white",
+                      borderRadius: "50%",
+                      width: "24px",
+                      height: "24px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "12px",
+                      fontWeight: "bold",
+                      boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+                      zIndex: 2,
+                    }}
+                    title="저장됨"
+                  >
+                    ✓
+                  </div>
+                  {hoveredPokemonId === id && (
+                    <button
+                      onClick={(e) => handleRemovePokemon(e, id)}
+                      disabled={loading}
+                      style={{
+                        position: "absolute",
+                        top: "8px",
+                        left: "8px",
+                        width: "28px",
+                        height: "28px",
+                        borderRadius: "50%",
+                        backgroundColor: "rgba(220, 38, 38, 0.9)",
+                        color: "white",
+                        border: "none",
+                        cursor: loading ? "not-allowed" : "pointer",
+                        fontSize: "16px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+                        transition: "all 0.2s",
+                        zIndex: 3,
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!loading) {
+                          e.currentTarget.style.backgroundColor =
+                            "rgba(185, 28, 28, 1)";
+                          e.currentTarget.style.transform = "scale(1.1)";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor =
+                          "rgba(220, 38, 38, 0.9)";
+                        e.currentTarget.style.transform = "scale(1)";
+                      }}
+                      title="장바구니에서 삭제"
+                    >
+                      ×
+                    </button>
+                  )}
+                </>
               )}
               {/* 포켓몬 공식 일러스트 이미지 */}
               <img

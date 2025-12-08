@@ -61,6 +61,12 @@ export function PokemonProvider({ children }) {
       setError(null);
 
       try {
+        console.log("포켓몬 추가 요청:", {
+          url: `${API_BASE_URL}/pokemon?userId=${user.id}`,
+          pokemonId: Number(pokemonId),
+          userId: user.id,
+        });
+
         const response = await fetch(
           `${API_BASE_URL}/pokemon?userId=${user.id}`,
           {
@@ -77,10 +83,25 @@ export function PokemonProvider({ children }) {
           }
         );
 
+        console.log("API 응답:", {
+          status: response.status,
+          statusText: response.statusText,
+          ok: response.ok,
+        });
+
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({
-            error: `HTTP ${response.status}: ${response.statusText}`,
-          }));
+          let errorData;
+          try {
+            const text = await response.text();
+            console.error("에러 응답 본문:", text);
+            errorData = text ? JSON.parse(text) : {};
+          } catch (parseError) {
+            console.error("응답 파싱 실패:", parseError);
+            errorData = {
+              error: `HTTP ${response.status}: ${response.statusText}`,
+            };
+          }
+
           const errorMessage =
             errorData.error ||
             errorData.details ||
@@ -90,6 +111,7 @@ export function PokemonProvider({ children }) {
         }
 
         const data = await response.json();
+        console.log("포켓몬 추가 성공:", data);
         setMyPokemon((prev) => [...prev, pokemonId]);
         return {
           success: true,
@@ -100,6 +122,7 @@ export function PokemonProvider({ children }) {
         console.error("에러 상세:", {
           message: err.message,
           stack: err.stack,
+          name: err.name,
         });
         setError(err.message);
         throw err;
@@ -122,14 +145,27 @@ export function PokemonProvider({ children }) {
 
       try {
         const response = await fetch(
-          `${API_BASE_URL}/pokemon/${pokemonId}?userId=${user.id}`,
+          `${API_BASE_URL}/pokemon?userId=${user.id}&pokemonId=${pokemonId}`,
           {
             method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ pokemonId: Number(pokemonId) }),
           }
         );
 
         if (!response.ok) {
-          const errorData = await response.json();
+          let errorData;
+          try {
+            const text = await response.text();
+            errorData = text ? JSON.parse(text) : {};
+          } catch (parseError) {
+            console.error("응답 파싱 실패:", parseError);
+            errorData = {
+              error: `포켓몬 삭제에 실패했습니다. (${response.status} ${response.statusText})`,
+            };
+          }
           throw new Error(errorData.error || "포켓몬 삭제에 실패했습니다.");
         }
 

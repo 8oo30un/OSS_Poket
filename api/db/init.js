@@ -1,6 +1,9 @@
 // 데이터베이스 초기화 API 엔드포인트
 // GET 또는 POST 요청으로 실행
-import { sql } from "@vercel/postgres";
+// Prisma를 사용하므로 prisma db push를 사용하는 것이 권장됩니다
+// 환경 변수 로드 (vercel dev에서 필요)
+import "../../lib/env-loader.js";
+import prisma from "../../lib/prisma.js";
 
 export default async function handler(req, res) {
   // CORS 헤더 설정
@@ -19,41 +22,21 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 사용자 테이블 생성
-    await sql`
-      CREATE TABLE IF NOT EXISTS users (
-        user_id VARCHAR(255) PRIMARY KEY,
-        email VARCHAR(255) NOT NULL,
-        name VARCHAR(255) NOT NULL,
-        picture TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-    `;
+    // Prisma를 사용하는 경우, 스키마를 데이터베이스에 푸시
+    // 이 API는 호환성을 위해 유지하지만, prisma db push를 사용하는 것이 권장됩니다
 
-    // 사용자별 포켓몬 저장 테이블 생성
-    await sql`
-      CREATE TABLE IF NOT EXISTS user_pokemon (
-        id SERIAL PRIMARY KEY,
-        user_id VARCHAR(255) NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-        pokemon_id INTEGER NOT NULL,
-        added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE(user_id, pokemon_id)
-      );
-    `;
+    // 간단한 연결 테스트
+    await prisma.$connect();
 
-    // 인덱스 생성
-    await sql`
-      CREATE INDEX IF NOT EXISTS idx_user_pokemon_user_id ON user_pokemon(user_id);
-    `;
-
-    await sql`
-      CREATE INDEX IF NOT EXISTS idx_user_pokemon_pokemon_id ON user_pokemon(pokemon_id);
-    `;
+    // 테이블이 존재하는지 확인 (간단한 쿼리로)
+    await prisma.user.findFirst();
+    await prisma.userPokemon.findFirst();
 
     return res.status(200).json({
       success: true,
-      message: "데이터베이스 초기화가 완료되었습니다.",
+      message:
+        "데이터베이스 연결이 확인되었습니다. Prisma 스키마를 적용하려면 'npx prisma db push'를 실행하세요.",
+      note: "Prisma를 사용하는 경우, 스키마 변경은 'prisma db push' 또는 'prisma migrate dev'를 사용하세요.",
     });
   } catch (error) {
     console.error("데이터베이스 초기화 실패:", error);
