@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import Header from "./Header";
 
 export default function Home() {
   // 1번(이상해씨)부터 151번(뮤)까지 1세대 포켓몬 ID 배열 생성
@@ -15,40 +16,8 @@ export default function Home() {
         boxSizing: "border-box", // 패딩 포함해서 100vw 계산
         paddingTop: "100px", // fixed header 공간 확보
       }}
-    >
-      {/* Fixed Header */}
-      <header
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: "80px",
-          backgroundColor: "transparent",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "0 20px",
-          zIndex: 1000,
-        }}
       >
-        {/* 왼쪽: 로고 */}
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <img
-            src="/image/logo.png"
-            alt="Pokémon"
-            style={{
-              height: "50px",
-              width: "auto",
-              objectFit: "contain",
-              display: "block",
-            }}
-          />
-        </div>
-
-        {/* 오른쪽: 장바구니 영역 (추후 추가 예정) */}
-        <div style={{ width: "60px" }}></div>
-      </header>
+      <Header />
 
       <p style={{ textAlign: "center", color: "#666", marginBottom: "30px" }}>
         궁금한 포켓몬을 클릭해서 3D로 자세히 살펴보세요!
