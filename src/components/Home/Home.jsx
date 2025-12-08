@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { usePokemon } from "../../contexts/PokemonContext";
 import MyPokemonDropZone from "../MyPokemon/MyPokemonDropZone";
 import Header from "./Header";
+import { getPokemonSpecies } from "../../utils/pokeapi";
 
 export default function Home() {
   const { user, logout } = useAuth();
