@@ -1,6 +1,7 @@
 import React from "react";
+import SearchAndFilter from "./SearchAndFilter";
 
-export default function Header() {
+export default function Header({ onSearchChange, onFilterChange }) {
   return (
     <header
       style={{
@@ -26,7 +27,7 @@ export default function Header() {
           objectFit: "contain",
         }}
       />
-      <h1 style={{ color: "black", fontWeight: "bold" }}>Pokémon</h1>
+      <SearchAndFilter onSearchChange={onSearchChange} onFilterChange={onFilterChange} />
       <img src="/image/cart.png" alt="장바구니" style={{ width: "150px", height: "150px", objectFit: "contain" }} />
     </header>
   );
