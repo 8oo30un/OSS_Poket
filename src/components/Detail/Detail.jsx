@@ -97,6 +97,9 @@ export default function Detail() {
     category: "포켓몬",
     ability: "-",
     gender: "-",
+    captureRate: "-",
+    rarity: "보통",
+    isLegendary: false,
     cta: "정보 보기",
   });
   const [error, setError] = useState(null);
@@ -128,6 +131,9 @@ export default function Detail() {
           category: "??? 포켓몬",
           ability: "-",
           gender: "-",
+          captureRate: "-",
+          rarity: "보통",
+          isLegendary: false,
           cta: "도감 업데이트 알림 받기",
         });
       }
@@ -507,6 +513,11 @@ export default function Detail() {
                   { label: "몸무게", value: info.weight },
                   { label: "특성", value: info.ability },
                   { label: "성별", value: info.gender },
+                  {
+                    label: "희귀도",
+                    value: info.isLegendary ? "전설 · 환상" : info.rarity,
+                  },
+                  { label: "포획률", value: info.captureRate },
                 ].map((item) => (
                   <div
                     key={item.label}
