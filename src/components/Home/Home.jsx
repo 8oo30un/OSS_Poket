@@ -102,7 +102,7 @@ export default function Home() {
     <div
       style={{
         padding: "20px 10px",
-        backgroundColor: "#f0f2f5",
+        backgroundColor: "#ffffff",
         minHeight: "100vh",
         width: "100%", // 100vw 대신 100% 사용
         maxWidth: "100vw", // 최대 너비 제한
