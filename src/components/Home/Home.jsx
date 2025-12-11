@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext";
+import { Link } from "react-router-dom";
 import { usePokemon } from "../../contexts/PokemonContext";
 import MyPokemonDropZone from "../MyPokemon/MyPokemonDropZone";
 import Header from "./Header";
@@ -8,9 +7,7 @@ import { getPokemonListData } from "../../utils/pokeapi";
 import { getCardBackground } from "../../utils/helpers";
 
 export default function Home() {
-  const { user, logout } = useAuth();
-  const { isPokemonSaved, myPokemon, removePokemon, loading } = usePokemon();
-  const navigate = useNavigate();
+  const { isPokemonSaved, removePokemon, loading } = usePokemon();
   const [hoveredPokemonId, setHoveredPokemonId] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -26,7 +23,7 @@ export default function Home() {
         const pokemonList = await getPokemonListData(1, 151);
         setAllPokemon(pokemonList);
       } catch (error) {
-        console.error('포켓몬 데이터 로드 실패:', error);
+        console.error("포켓몬 데이터 로드 실패:", error);
       } finally {
         setIsLoadingPokemon(false);
       }
@@ -38,14 +35,14 @@ export default function Home() {
   // 검색 및 필터링 - 이미 로드된 데이터에서만 필터링 (API 호출 없음)
   const displayedPokemon = useMemo(() => {
     if (isLoadingPokemon) return [];
-    
+
     let filtered = [...allPokemon];
-    
+
     // 저장된 포켓몬만 보기 필터
     if (filterSavedOnly) {
       filtered = filtered.filter((pokemon) => isPokemonSaved(pokemon.id));
     }
-    
+
     // 검색어 필터
     if (searchQuery.trim()) {
       const query = searchQuery.trim().toLowerCase();
@@ -56,9 +53,15 @@ export default function Home() {
         return pokemon.name.toLowerCase().includes(query);
       });
     }
-    
+
     return filtered;
-  }, [allPokemon, searchQuery, filterSavedOnly, isPokemonSaved, isLoadingPokemon]);
+  }, [
+    allPokemon,
+    searchQuery,
+    filterSavedOnly,
+    isPokemonSaved,
+    isLoadingPokemon,
+  ]);
 
   const handleDragStart = (e, pokemonId) => {
     e.dataTransfer.setData("pokemonId", pokemonId.toString());
@@ -78,11 +81,6 @@ export default function Home() {
         setIsDragging(false);
       }, 300);
     }
-  };
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
   };
 
   const handleRemovePokemon = async (e, pokemonId) => {
@@ -106,31 +104,34 @@ export default function Home() {
         padding: "20px 10px",
         backgroundColor: "#f0f2f5",
         minHeight: "100vh",
-        width: "100vw", // 기기 가로 전체 사용
-        boxSizing: "border-box", // 패딩 포함해서 100vw 계산
+        width: "100%", // 100vw 대신 100% 사용
+        maxWidth: "100vw", // 최대 너비 제한
+        boxSizing: "border-box", // 패딩 포함해서 너비 계산
         paddingTop: "100px", // fixed header 공간 확보
+        overflowX: "hidden", // 가로 스크롤 방지
       }}
     >
-      <Header 
+      <Header
         onSearchChange={setSearchQuery}
         onFilterChange={setFilterSavedOnly}
       />
-
 
 
       <p style={{ textAlign: "center", color: "#666", marginBottom: "30px" }}>
         궁금한 포켓몬을 클릭해서 3D로 자세히 살펴보세요!
       </p>
 
-
       {/* CSS Grid를 이용한 반응형 그리드 레이아웃 */}
       <div
         style={{
           display: "grid",
+          padding: "0 clamp(20px, 5vw, 40px)",
           // 화면 크기에 따라 컬럼 개수 자동 조절 (최소 120px 너비 보장)
           gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))",
           gap: "20px",
-          width: "100%", // 기기 너비에 맞게 가로를 꽉 채움
+          width: "100%",
+          maxWidth: "100%",
+          boxSizing: "border-box", // 패딩이 너비에 포함되도록
         }}
       >
         {isLoadingPokemon ? (
@@ -157,96 +158,69 @@ export default function Home() {
           </div>
         ) : (
           displayedPokemon.map((pokemon) => (
-          // Link 컴포넌트: 클릭 시 '/pokemon/{id}' 경로로 이동
-          <Link
-            to={`/pokemon/${pokemon.id}`}
-            key={pokemon.id}
-            style={{ textDecoration: "none" }}
-          >
-            <div
-              draggable
-              onDragStart={(e) => handleDragStart(e, pokemon.id)}
-              onDragEnd={handleDragEnd}
-              style={{
-                background: getCardBackground(pokemon.types),
-                borderRadius: "15px",
-                padding: "10px",
-                boxShadow: isPokemonSaved(pokemon.id)
-                  ? "0 4px 12px rgba(59, 130, 246, 0.3), 0 4px 8px rgba(0,0,0,0.1)"
-                  : "0 4px 8px rgba(0,0,0,0.1)",
-                textAlign: "center",
-                transition: "transform 0.2s, opacity 0.2s, box-shadow 0.2s",
-                cursor: "grab",
-                position: "relative",
-                border: isPokemonSaved(pokemon.id)
-                  ? "2px solid #3b82f6"
-                  : "2px solid rgba(255,255,255,0.5)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "scale(1.05)";
-                e.currentTarget.style.cursor = "grab";
-                if (isPokemonSaved(pokemon.id)) {
-                  setHoveredPokemonId(pokemon.id);
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "scale(1)";
-                e.currentTarget.style.cursor = "grab";
-                setHoveredPokemonId(null);
-              }}
-              onMouseDown={(e) => {
-                e.currentTarget.style.cursor = "grabbing";
-              }}
-              onMouseUp={(e) => {
-                e.currentTarget.style.cursor = "grab";
-              }}
+            // Link 컴포넌트: 클릭 시 '/pokemon/{id}' 경로로 이동
+            <Link
+              to={`/pokemon/${pokemon.id}`}
+              key={pokemon.id}
+              style={{ textDecoration: "none" }}
             >
-              {isPokemonSaved(pokemon.id) && (
-                <>
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: "8px",
-                      right: "8px",
-                      backgroundColor: "#3b82f6",
-                      color: "white",
-                      borderRadius: "50%",
-                      width: "24px",
-                      height: "24px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: "12px",
-                      fontWeight: "bold",
-                      boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
-                      zIndex: 2,
-                    }}
-                    title="저장됨"
-                  >
-                    ✓
-                  </div>
-                  {hoveredPokemonId === pokemon.id && (
-                    <button
-                      onClick={(e) => handleRemovePokemon(e, pokemon.id)}
-                      disabled={loading}
+              <div
+                draggable
+                onDragStart={(e) => handleDragStart(e, pokemon.id)}
+                onDragEnd={handleDragEnd}
+                style={{
+                  background: getCardBackground(pokemon.types),
+                  borderRadius: "15px",
+                  padding: "10px",
+                  boxShadow: isPokemonSaved(pokemon.id)
+                    ? "0 4px 12px rgba(59, 130, 246, 0.3), 0 4px 8px rgba(0,0,0,0.1)"
+                    : "0 4px 8px rgba(0,0,0,0.1)",
+                  textAlign: "center",
+                  transition: "transform 0.2s, opacity 0.2s, box-shadow 0.2s",
+                  cursor: "grab",
+                  position: "relative",
+                  border: isPokemonSaved(pokemon.id)
+                    ? "2px solid #3b82f6"
+                    : "2px solid rgba(255,255,255,0.5)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "scale(1.05)";
+                  e.currentTarget.style.cursor = "grab";
+                  if (isPokemonSaved(pokemon.id)) {
+                    setHoveredPokemonId(pokemon.id);
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "scale(1)";
+                  e.currentTarget.style.cursor = "grab";
+                  setHoveredPokemonId(null);
+                }}
+                onMouseDown={(e) => {
+                  e.currentTarget.style.cursor = "grabbing";
+                }}
+                onMouseUp={(e) => {
+                  e.currentTarget.style.cursor = "grab";
+                }}
+              >
+                {isPokemonSaved(pokemon.id) && (
+                  <>
+                    <div
                       style={{
                         position: "absolute",
                         top: "8px",
-                        left: "8px",
-                        width: "28px",
-                        height: "28px",
-                        borderRadius: "50%",
-                        backgroundColor: "rgba(220, 38, 38, 0.9)",
+                        right: "8px",
+                        backgroundColor: "#3b82f6",
                         color: "white",
-                        border: "none",
-                        cursor: loading ? "not-allowed" : "pointer",
-                        fontSize: "16px",
+                        borderRadius: "50%",
+                        width: "24px",
+                        height: "24px",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
+                        fontSize: "12px",
+                        fontWeight: "bold",
                         boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
-                        transition: "all 0.2s",
-                        zIndex: 3,
+                        zIndex: 2,
                       }}
                       onMouseEnter={(e) => {
                         if (!loading) {
@@ -262,30 +236,69 @@ export default function Home() {
                       }}
                       title="삭제"
                     >
-                      ×
-                    </button>
-                  )}
-                </>
-              )}
-              {/* 포켓몬 공식 일러스트 이미지 */}
-              <img
-                src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.id}.png`}
-                alt={`Pokemon ${pokemon.id}`}
-                style={{ width: "100%", height: "auto" }}
-                // 이미지 로딩 최적화
-                loading="lazy"
-              />
-              <p
-                style={{
-                  margin: "10px 0 0",
-                  color: "#555",
-                  fontWeight: "bold",
-                }}
-              >
-                No. {pokemon.id}
-              </p>
-            </div>
-          </Link>
+                      ✓
+                    </div>
+                    {hoveredPokemonId === pokemon.id && (
+                      <button
+                        onClick={(e) => handleRemovePokemon(e, pokemon.id)}
+                        disabled={loading}
+                        style={{
+                          position: "absolute",
+                          top: "8px",
+                          left: "8px",
+                          width: "28px",
+                          height: "28px",
+                          borderRadius: "50%",
+                          backgroundColor: "rgba(220, 38, 38, 0.9)",
+                          color: "white",
+                          border: "none",
+                          cursor: loading ? "not-allowed" : "pointer",
+                          fontSize: "16px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+                          transition: "all 0.2s",
+                          zIndex: 3,
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!loading) {
+                            e.currentTarget.style.backgroundColor =
+                              "rgba(185, 28, 28, 1)";
+                            e.currentTarget.style.transform = "scale(1.1)";
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor =
+                            "rgba(220, 38, 38, 0.9)";
+                          e.currentTarget.style.transform = "scale(1)";
+                        }}
+                        title="장바구니에서 삭제"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </>
+                )}
+                {/* 포켓몬 공식 일러스트 이미지 */}
+                <img
+                  src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.id}.png`}
+                  alt={`Pokemon ${pokemon.id}`}
+                  style={{ width: "100%", height: "auto" }}
+                  // 이미지 로딩 최적화
+                  loading="lazy"
+                />
+                <p
+                  style={{
+                    margin: "10px 0 0",
+                    color: "#555",
+                    fontWeight: "bold",
+                  }}
+                >
+                  No. {pokemon.id}
+                </p>
+              </div>
+            </Link>
           ))
         )}
       </div>
