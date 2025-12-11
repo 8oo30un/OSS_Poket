@@ -41,6 +41,13 @@ export default function Header({ onSearchChange, onFilterChange }) {
         onSearchChange={onSearchChange}
         onFilterChange={onFilterChange}
       />
+       <Link to="/cart" style={{ cursor: "pointer" }}>
+          <img
+            src="/image/cart2.png"
+            alt="mbti 보기"
+            style={{ width: "150px", height: "150px", objectFit: "contain" }}
+          />
+        </Link>
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
         <Link to="/cart" style={{ cursor: "pointer" }}>
           <img
